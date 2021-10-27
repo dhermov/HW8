@@ -1,0 +1,255 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Jade Delight</title>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+<script language="javascript">
+
+function MenuItem(name, cost)
+{
+	this.name = name;
+	this.cost=cost;
+}
+
+menuItems = new Array(
+	new MenuItem("Chicken Chop Suey", 4.5),
+	new MenuItem("Sweet and Sour Pork", 6.25),
+	new MenuItem("Shrimp Lo Mein", 5.25),
+	new MenuItem("Moo Shi Chicken", 6.5),
+	new MenuItem("Fried Rice", 2.35)
+);
+
+function makeSelect(name, minRange, maxRange)
+{
+	var t= "";
+	t = "<select name='" + name + "' size='1'>";
+	for (j=minRange; j<=maxRange; j++)
+	   t += "<option>" + j + "</option>";
+	t+= "</select>"; 
+	return t;
+}
+
+//if pickup is chosen, hide fields for street and city
+function isPickup()
+{
+	pickUp = true;
+	deliver = false;
+	$("input[name='street']").hide();
+	$("input[name='city']").hide();
+}
+
+//if delivery is chosen, show the fields for street and city
+function isDelivery()
+{
+	deliver = true;
+	pickUp = false;
+	$("input[name='street']").show();
+	$("input[name='city']").show();
+}
+</script>
+
+<h1>Jade Delight</h1>
+<form>
+
+<p>First Name: <input type="text"  name='fname' /></p>
+<p>Last Name*:  <input type="text"  name='lname' /></p>
+<p>Street: <input type="text"  name='street' /></p>
+<p>City: <input type="text"  name='city' /></p>
+<p>Phone* (##########): <input type="text"  name='phone' /></p>
+<p> 
+	<input type="radio"  name="p_or_d" value = "pickup" checked="checked" onclick="isPickup()"/>Pickup  
+	<input type="radio"  name='p_or_d' value = 'delivery' onclick="isDelivery()"/>
+	Delivery
+</p>
+<table border="0" cellpadding="3">
+  <tr>
+    <th>Select Item</th>
+    <th>Item Name</th>
+    <th>Cost Each</th>
+    <th>Total Cost</th>
+  </tr>
+<script language="javascript">
+
+//hide street and city since pick up is automatically chosen
+$("input[name='street']").hide();
+$("input[name='city']").hide();
+pickUp = true;
+
+ORDER_ITEMS = 5;
+  var s = "";
+  for (i=0; i< menuItems.length; i++)
+  {
+	  s += "<tr><td>";
+	  s += makeSelect("quan" + i, 0, 10);
+	  s += "</td><td>" + menuItems[i].name + "</td>";
+	  s += "<td> $ " + menuItems[i].cost.toFixed(2) + "</td>";
+	  s += "<td>$<input type='text' name='cost'/></td></tr>";
+  }
+  document.writeln(s);
+  //update totals when user selects items
+  $(document).ready(function(){
+  	$("select").change(function() {
+  		updateTotal();
+  	})
+	//update the totals and corresponding values
+  	function updateTotal()
+  	{
+		//initalize variables
+  		total_cost_item=0;
+  		subtotal=0;
+  		mass_tax= 0; 
+  		final_total = 0;
+		//loop through and update all items
+  		for (n=0;n<ORDER_ITEMS;n++)
+  		{
+  			cost = menuItems[n].cost
+  			quan = document.getElementsByName("quan" + n)[0].value;
+  			total_cost_item =cost * quan;
+			document.getElementsByName("cost")[n].value = total_cost_item.toFixed(2);
+  			subtotal += total_cost_item;
+  			mass_tax = (subtotal * .0625);
+  			final_total = mass_tax + subtotal;
+  		}
+		//assign totals
+		document.getElementById("subtotal").value = subtotal.toFixed(2);
+		document.getElementById("tax").value = mass_tax.toFixed(2);
+		document.getElementById("total").value = final_total.toFixed(2);
+  	}
+  })
+  
+  //find the time it will take for the order to be completed based on bool values
+  function estimatedTime()
+  {
+	  var estTime = 0;
+	  if (pickUp) {
+		  estTime = 15;
+	  }
+	  else if (deliver) {
+		  estTime = 30;
+	  }
+	 return estTime;
+  }
+  
+  function displayOrder(){
+	//loop and get all the values the user ordered
+	userOrder = "";
+	oneItem = "";
+	for (i=0; i< menuItems.length; i++)
+	{
+		//item name, quantity of item, cost of each, subtotal, tax, total 
+		itemOrdered = menuItems[i].name;
+		costItem = menuItems[i].cost;
+		quanItem = document.getElementsByName("quan" + i)[0].value;
+		
+		if (quanItem > 0) {
+			oneItem = "Item Ordered: " + itemOrdered + " | Cost Item: " + costItem 
+			+ " | Quantity Item: " + quanItem + "\n" ;
+			userOrder += oneItem;
+		}
+	}
+	/*call function to get estimated times, had to do this because embedding
+	the estimated time in my validateAndOrder() function was causing issues
+	in the alert message*/
+	pordTime = estimatedTime();
+	//parse through their order
+	var newLine = "\r\n";
+	var orderMsg = "Thank you for your order!"
+	orderMsg += newLine;
+	orderMsg += "Here is your order: "
+	orderMsg += newLine;
+	orderMsg += userOrder;
+	orderMsg += newLine;
+	orderMsg += "Subtotal: $" + ($("#subtotal").val()) ;
+	orderMsg += newLine;
+	orderMsg += "Tax: $" + ($("#tax").val());
+	orderMsg += newLine;
+	orderMsg += "Total: $" + ($("#total").val());
+	orderMsg += newLine;
+	orderMsg += "Your order will be ready in " + pordTime + " mins.";
+	alert(orderMsg);
+  }
+  
+  //make sure everything is ordered correctly and display appropriate alerts
+  //if it is not
+ function validateAndOrder(){
+	 //use bool to keep track of valid order
+	 valid_order = true;
+	 //check last name
+	var last_name = $("input[name='lname']").val();
+	 if (last_name == "") {
+		valid_order = false;
+	 	alert("Please enter a last name.");
+	 }
+	 //check phone number
+	 var phone_number = $("input[name='phone']").val();
+	 if (phone_number.length != 10) {
+		valid_order = false;
+	 	alert("Please enter a valid phone number.");
+	 }
+	 else if(phone_number.length == 10) 
+	 {
+		 //ensure that all digits are real numbers
+		 not_real_number = false;
+		 for (var i = 0; i < phone_number.length; i++) {
+		 	if (isNaN(i)) {
+		 		not_real_number = true; 
+		 	}
+			else {
+				continue; 
+			}
+		 }
+		 if (not_real_number) {
+			valid_order = false;
+			alert("Please enter a valid phone number.");
+		}
+	}
+	//check if it is pickup or delivery, set pickup time accordingly
+	let estTime = "0";
+	if (pickUp) {
+		estTime = "15";
+	}
+	//otherwise, it is delivery, check for validity
+	else {
+		if ($("input[name='street']").val() == "") {
+			valid_order = false;
+			alert("Please enter a valid street.")
+		}
+		else if ($("input[name='city']").val() == "") {
+			valid_order = false;
+			alert("Please enter a valid city.")
+		}
+		//set order time
+		estTime = "30";
+	}
+	//make sure at least 1 item was ordered
+	if ($("#total").val() == 0.00 || $("#total").val() == "")
+	{
+		alert("You must order at least 1 item.")
+		valid_order = false;
+	}
+	//if the order is valid, display it
+	if (valid_order){
+		displayOrder();
+	}
+ }
+ 
+</script>
+</table>
+<p>Subtotal: 
+   $<input type="text"  name='subtotal' id="subtotal" />
+</p>
+<p>Mass tax 6.25%:
+  $ <input type="text"  name='tax' id="tax" />
+</p>
+<p>Total: $ <input type="text"  name='total' id="total" />
+</p>
+
+<input type = "button" value = "Submit Order" onclick= "validateAndOrder()"/>
+
+</form>
+</body>
+</html>
